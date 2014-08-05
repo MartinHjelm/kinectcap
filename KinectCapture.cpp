@@ -12,7 +12,7 @@
 #include <pcl/io/pcd_io.h>
 #include <pcl/io/openni_grabber.h>
 //#include <pcl/common/time.h>
-//#include <boost/math/special_functions/fpclassify.hpp>
+#include <boost/math/special_functions/fpclassify.hpp>
 
 
 typedef pcl::PointXYZRGBA PointT;
@@ -28,24 +28,23 @@ class KinectCapture
   bool imageCapType, videoCapType;
   int counter, save_n, skipImageFreq;
 
-  KinectCapture();
-
 public:  
+  KinectCapture();
   void run();
-  void setCaptureType(std::string)
+  void setCaptureType(std::string s);
 };
 
   
 
-KinectCapture() : image(false), video(false), counter(-1), save_n(0), skipImageFreq(1)
+KinectCapture::KinectCapture() : image(false), video(false), counter(-1), save_n(0), skipImageFreq(1)
 {}
 
 
-void KinectCapture::setCaptureType ( char ** captureType )
+void KinectCapture::setCaptureType ( std::string s )
 {
-  if (argc > 1 && std::string(argv[1]) == "--image") 
+  if (s.length() > 1 && s == "--image") 
     imageCapType = true;
-  else   if (argc > 1 && std::string(argv[1]) == "--video") 
+  else if (s.length() > 1 && s == "--video") 
     videoCapType = true;    
   else
     imageCapType = true;
@@ -192,14 +191,14 @@ KinectCapture::run()
   boost::signals2::connection c;
   if (imageCapType)
   {
-    boost::function<void (const PC::ConstPtr&)> f = boost::bind (imageCallback, _1);      
+    boost::function<void (const PC::ConstPtr&)> f = boost::bind (this->imageCallback, _1);      
     // connect callback function for desired signal. In this case its a point cloud with color values
     c = interface->registerCallback (f);
     }
   else
   {
     // videoWriter.reset(new cv::VideoWriter("video.avi", CV_FOURCC('m', 'j', 'p', 'g'), 25, cvSize(640, 480), 1));
-    boost::function<pcl::OpenNIGrabber::sig_cb_openni_image> f = boost::bind (videoCallback, _1);
+    boost::function<pcl::OpenNIGrabber::sig_cb_openni_image> f = boost::bind (this->videoCallback, _1);
     // connect callback function for desired signal. In this case its a point cloud with color values
     c = interface->registerCallback (f);
   }
@@ -231,7 +230,7 @@ int main(int argc, char ** argv)
   try 
   {    
     KinectCapture kc;
-    kc.setCaptureType(argv);
+    kc.setCaptureType( std::string(argv[1]) );
     kc.run();
     return 0;
   }
