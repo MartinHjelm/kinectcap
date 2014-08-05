@@ -11,9 +11,6 @@
 #include <pcl/point_cloud.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/io/openni_grabber.h>
-//#include <pcl/common/time.h>
-#include <boost/math/special_functions/fpclassify.hpp>
-
 
 typedef pcl::PointXYZRGBA PointT;
 typedef pcl::PointCloud<PointT> PC;
@@ -25,41 +22,41 @@ class KinectCapture
   void videoCallback(const boost::shared_ptr<openni_wrapper::Image>& img);
 
   boost::shared_ptr<cv::VideoWriter> videoWriter;
-  bool imageCapType, videoCapType, saveImg;
-  int counter, save_n, skipImageFreq;
+  bool capImage, capVideo, saveImg;
+  int save_n, skipImageFreq;
 
 public:  
   KinectCapture();
   void run();
   void setCaptureType(std::string s);
+  void setSkipFreq(std::string s);
 };
 
   
 
-KinectCapture::KinectCapture() : imageCapType(false), videoCapType(false), saveImg(false), counter(-1), save_n(0), skipImageFreq(1)
+KinectCapture::KinectCapture() : capImage(false), capVideo(false), saveImg(false), save_n(0), skipImageFreq(1)
 {}
 
 
 void KinectCapture::setCaptureType ( std::string s )
 {
   if (s.length() > 1 && s == "--image") 
-    imageCapType = true;
+    capImage = true;
   else if (s.length() > 1 && s == "--video") 
-    videoCapType = true;    
+    capVideo = true;    
   else
-    imageCapType = true;
+    capImage = true;
 }
+
+void KinectCapture::setSkipFreq(std::string s) { skipImageFreq = std::atoi(s.c_str()); }
+
 
 
 void KinectCapture::imageCallback(const PC::ConstPtr& cloud)
 {
-
-  std::string fName = std::string("image-") + boost::lexical_cast<std::string>(save_n);
-  std::string fEnding;
   
-  cv::Mat pcImg(640,480,CV_8UC3);
-
   // Convert point cloud to an image of the point cloud.
+  cv::Mat pcImg(640,480,CV_8UC3);
   Eigen::Vector3i rgbVals;  
   for(int iter_x = 0; iter_x != 640; iter_x++)
   {
@@ -73,39 +70,40 @@ void KinectCapture::imageCallback(const PC::ConstPtr& cloud)
     }
   }
 
+  // Show converted img
   cv::imshow("Result", pcImg);
   cv::waitKey(10);
-  if(!saveImg) return;
-  std::cout << "Writing cloud " << save_n << std::endl;
-  fEnding = std::string(".png");
-  cv::imwrite(fName+fEnding, pcImg);
 
-
-  if (imageCapType)
+  // If we are saving
+  if ( saveImg )
   {
-    // PC rgbpc;
-    // rgbpc.width = pc->width;
-    // rgbpc.height = pc->height;
-    // rgbpc.is_dense = pc->is_dense;
-    // for (pcl::PointCloud<pcl::PointXYZRGBA>::const_iterator ii = pc->begin(); ii != pc->end(); ++ii)
-    // {
-    //   pcl::PointXYZRGB p;
-    //   p.x = ii->x;
-    //   p.y = ii->y;
-    //   p.z = ii->z;
-    //   p.r = ii->r;
-    //   p.g = ii->g;
-    //   p.b = ii->b;
-    //   //p.rgb = ii->rgba;
-    //   rgbpc.push_back(p);
-    // }
+    std::cout << "Writing cloud " << save_n << std::endl;
+    std::string fName = std::string("image-") + boost::lexical_cast<std::string>(save_n);
+    std::string fEnding = ".png";
+    cv::imwrite(fName+fEnding, pcImg);
 
+      // PC rgbpc;
+      // rgbpc.width = pc->width;
+      // rgbpc.height = pc->height;
+      // rgbpc.is_dense = pc->is_dense;
+      // for (pcl::PointCloud<pcl::PointXYZRGBA>::const_iterator ii = pc->begin(); ii != pc->end(); ++ii)
+      // {
+      //   pcl::PointXYZRGB p;
+      //   p.x = ii->x;
+      //   p.y = ii->y;
+      //   p.z = ii->z;
+      //   p.r = ii->r;
+      //   p.g = ii->g;
+      //   p.b = ii->b;
+      //   //p.rgb = ii->rgba;
+      //   rgbpc.push_back(p);
+    
     fEnding = std::string(".pcd");
     pcl::io::savePCDFileBinary(fName+fEnding, *cloud);
     save_n++;
+    std::cout << "Done" << std::endl;
+    saveImg = false;
   }
-  std::cout << "Done" << std::endl;
-  saveImg = false;
 }
 
 
@@ -150,7 +148,7 @@ KinectCapture::run()
 {
    
   cv::Mat pcImg(640,480,CV_8UC3);
-  if (imageCapType)
+  if (capImage)
   {
     cv::imshow("Result", pcImg);
     cv::waitKey(10);
@@ -160,7 +158,7 @@ KinectCapture::run()
 
   // std::cout << interface->getFramesPerSecond() << std::endl;
   boost::signals2::connection c;
-  if (imageCapType)
+  if (capImage)
   {
     boost::function<void (const PC::ConstPtr&)> f = boost::bind(&KinectCapture::imageCallback, this, _1);      
     // connect callback function for desired signal. In this case its a point cloud with color values
@@ -176,17 +174,14 @@ KinectCapture::run()
   // start receiving point clouds
   interface->start ();
   
-
-  // wait until user quits program with Ctrl-C, but no busy-waiting -> sleep (1);
   std::string s;
-
   while (true)
   {
     std::cout << "Enter key " << std::flush;
-    std::cin >> s;
+    std::cin.get();
+    // std::cin >> s;
     if ( s == "q" )
       break;
-    counter++;
     saveImg = true;
   }
   // stop the grabber
@@ -206,6 +201,8 @@ int main(int argc, char ** argv)
     std::string s = "";
     if(argv[1])
       s = std::string(argv[1]);
+    if(argv[2])
+      kc.setSkipFreq(std::string(argv[2]));
     kc.setCaptureType( s );
     kc.run();
     return 0;
