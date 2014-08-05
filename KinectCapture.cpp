@@ -25,7 +25,7 @@ class KinectCapture
   void videoCallback(const boost::shared_ptr<openni_wrapper::Image>& img);
 
   boost::shared_ptr<cv::VideoWriter> videoWriter;
-  bool imageCapType, videoCapType;
+  bool imageCapType, videoCapType, saveImg;
   int counter, save_n, skipImageFreq;
 
 public:  
@@ -36,7 +36,7 @@ public:
 
   
 
-KinectCapture::KinectCapture() : imageCapType(false), videoCapType(false), counter(-1), save_n(0), skipImageFreq(1)
+KinectCapture::KinectCapture() : imageCapType(false), videoCapType(false), saveImg(false), counter(-1), save_n(0), skipImageFreq(1)
 {}
 
 
@@ -73,39 +73,9 @@ void KinectCapture::imageCallback(const PC::ConstPtr& cloud)
     }
   }
 
-    
-  // int row = 0, col = 0;
-  // for (pcl::PointCloud<pcl::PointXYZRGBA>::const_iterator i = pc->begin();
-  //      i != pc->end(); ++i)
-  //   {
-  //     const uint32_t rgb = *reinterpret_cast<const int*>(&i->rgba);
-  //     {
-  //       uint8_t r = (rgb >> 16) & 0x0000ff;
-  //       uint8_t g = (rgb >> 8)  & 0x0000ff;
-  //       uint8_t b = (rgb)       & 0x0000ff;
-        
-  //       if (image && boost::math::isnan(i->x + i->y + i->z))
-  //         r = g = b = 0;
-        
-  //       ((uchar*)(colorimage->imageData + colorimage->widthStep*row))[col*3+0] = b;
-  //       ((uchar*)(colorimage->imageData + colorimage->widthStep*row))[col*3+1] = g;
-  //       ((uchar*)(colorimage->imageData + colorimage->widthStep*row))[col*3+2] = r;
-  //     }
-      
-  //     if (col == 639)
-  //       {
-  //         col = 0;
-  //         row++;
-  //       }
-  //     else
-  //       col++;
-  //   }
-
-
   cv::imshow("Result", pcImg);
   cv::waitKey(10);
-
-  // if (imageCapType && save_n > counter) return;
+  if(!saveImg) return;
   std::cout << "Writing cloud " << save_n << std::endl;
   fEnding = std::string(".png");
   cv::imwrite(fName+fEnding, pcImg);
@@ -133,9 +103,9 @@ void KinectCapture::imageCallback(const PC::ConstPtr& cloud)
     fEnding = std::string(".pcd");
     pcl::io::savePCDFileBinary(fName+fEnding, *cloud);
     save_n++;
-
   }
   std::cout << "Done" << std::endl;
+  saveImg = false;
 }
 
 
@@ -179,12 +149,12 @@ void
 KinectCapture::run()
 {
    
-  // cv::Mat pcImg(640,480,CV_8UC3);
-  // if (imageCapType)
-  // {
-  //   cv::imshow("Result", pcImg);
-  //   cv::waitKey(10);
-  // }
+  cv::Mat pcImg(640,480,CV_8UC3);
+  if (imageCapType)
+  {
+    cv::imshow("Result", pcImg);
+    cv::waitKey(10);
+  }
   // create a new grabber for OpenNI devices
   pcl::Grabber* interface = new pcl::OpenNIGrabber();
 
@@ -192,23 +162,24 @@ KinectCapture::run()
   boost::signals2::connection c;
   if (imageCapType)
   {
-    boost::function<void (const PC::ConstPtr&)> f = boost::bind (&KinectCapture::imageCallback, this, _1);      
-    // connect callback function for desired signal. In this case its a point cloud with color values
-    c = interface->registerCallback (f);
-    }
-  else
-  {
-    // videoWriter.reset(new cv::VideoWriter("video.avi", CV_FOURCC('m', 'j', 'p', 'g'), 25, cvSize(640, 480), 1));
-    boost::function<pcl::OpenNIGrabber::sig_cb_openni_image> f = boost::bind (&KinectCapture::videoCallback, this, _1);
+    boost::function<void (const PC::ConstPtr&)> f = boost::bind(&KinectCapture::imageCallback, this, _1);      
     // connect callback function for desired signal. In this case its a point cloud with color values
     c = interface->registerCallback (f);
   }
-// std::bind(&game::checkBounds, this, _1)
+  else
+  {
+    // videoWriter.reset(new cv::VideoWriter("video.avi", CV_FOURCC('m', 'j', 'p', 'g'), 25, cvSize(640, 480), 1));
+    boost::function<pcl::OpenNIGrabber::sig_cb_openni_image> f = boost::bind(&KinectCapture::videoCallback, this, _1);
+    // connect callback function for desired signal. In this case its a point cloud with color values
+    c = interface->registerCallback (f);
+  }
   // start receiving point clouds
   interface->start ();
   
+
   // wait until user quits program with Ctrl-C, but no busy-waiting -> sleep (1);
   std::string s;
+
   while (true)
   {
     std::cout << "Enter key " << std::flush;
@@ -216,6 +187,7 @@ KinectCapture::run()
     if ( s == "q" )
       break;
     counter++;
+    saveImg = true;
   }
   // stop the grabber
   interface->stop ();
