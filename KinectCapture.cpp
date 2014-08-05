@@ -21,8 +21,8 @@ typedef pcl::PointCloud<PointT> PC;
 
 class KinectCapture
 {
-  void imageCallback(const PC::ConstPtr& pc);
-  void videoCallback(const PC::ConstPtr& pc);
+  void imageCallback(const PC::ConstPtr& cloud);
+  void videoCallback(const boost::shared_ptr<openni_wrapper::Image>& img);
 
   boost::shared_ptr<cv::VideoWriter> videoWriter;
   bool imageCapType, videoCapType;
@@ -36,7 +36,7 @@ public:
 
   
 
-KinectCapture::KinectCapture() : image(false), video(false), counter(-1), save_n(0), skipImageFreq(1)
+KinectCapture::KinectCapture() : imageCapType(false), videoCapType(false), counter(-1), save_n(0), skipImageFreq(1)
 {}
 
 
@@ -51,7 +51,7 @@ void KinectCapture::setCaptureType ( std::string s )
 }
 
 
-void KinectCapture::imageCallback(const PC::ConstPtr& pc)
+void KinectCapture::imageCallback(const PC::ConstPtr& cloud)
 {
 
   std::string fName = std::string("image-") + boost::lexical_cast<std::string>(save_n);
@@ -131,7 +131,7 @@ void KinectCapture::imageCallback(const PC::ConstPtr& pc)
     // }
 
     fEnding = std::string(".pcd");
-    pcl::io::savePCDFileBinary(fName+fEnding, *pc);
+    pcl::io::savePCDFileBinary(fName+fEnding, *cloud);
     save_n++;
 
   }
@@ -178,12 +178,13 @@ public:
 void
 KinectCapture::run()
 {
-  
-  if (imageCapType)
-  {
-    cv::imshow("Result", pcImg);
-    cv::waitKey(10);
-  }
+   
+  // cv::Mat pcImg(640,480,CV_8UC3);
+  // if (imageCapType)
+  // {
+  //   cv::imshow("Result", pcImg);
+  //   cv::waitKey(10);
+  // }
   // create a new grabber for OpenNI devices
   pcl::Grabber* interface = new pcl::OpenNIGrabber();
 
@@ -191,18 +192,18 @@ KinectCapture::run()
   boost::signals2::connection c;
   if (imageCapType)
   {
-    boost::function<void (const PC::ConstPtr&)> f = boost::bind (this->imageCallback, _1);      
+    boost::function<void (const PC::ConstPtr&)> f = boost::bind (&KinectCapture::imageCallback, this, _1);      
     // connect callback function for desired signal. In this case its a point cloud with color values
     c = interface->registerCallback (f);
     }
   else
   {
     // videoWriter.reset(new cv::VideoWriter("video.avi", CV_FOURCC('m', 'j', 'p', 'g'), 25, cvSize(640, 480), 1));
-    boost::function<pcl::OpenNIGrabber::sig_cb_openni_image> f = boost::bind (this->videoCallback, _1);
+    boost::function<pcl::OpenNIGrabber::sig_cb_openni_image> f = boost::bind (&KinectCapture::videoCallback, this, _1);
     // connect callback function for desired signal. In this case its a point cloud with color values
     c = interface->registerCallback (f);
   }
-
+// std::bind(&game::checkBounds, this, _1)
   // start receiving point clouds
   interface->start ();
   
@@ -230,7 +231,10 @@ int main(int argc, char ** argv)
   try 
   {    
     KinectCapture kc;
-    kc.setCaptureType( std::string(argv[1]) );
+    std::string s = "";
+    if(argv[1])
+      s = std::string(argv[1]);
+    kc.setCaptureType( s );
     kc.run();
     return 0;
   }
