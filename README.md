@@ -1,6 +1,6 @@
 kinectcap
 =========
 
-Capture Kinect image and image sequence data
+Captures Kinect image and point cloud data, and saves them to disk on keypress.
 
 **Requirements:** OpenCV & Point Cloud Library(PCL)
