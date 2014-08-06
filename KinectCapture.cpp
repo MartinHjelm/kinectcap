@@ -70,16 +70,12 @@ void KinectCapture::setImageCaptureDir ( std::string s )
 void
 KinectCapture::setImageNameCounter()
 {
-  int counter = 0;
   boost::filesystem::directory_iterator it( getImageCaptureDir() );
   for (; it != boost::filesystem::directory_iterator(); ++it )
   {
-    if ( boost::filesystem::is_regular_file( it->status() ) && it->path().extension() == "jpg" )
-      counter++;
+    if ( boost::filesystem::is_regular_file( it->status() ) && it->path().extension() == ".png" )
+      save_n++;
   }
-  // Set image name counter
-  if ( counter != 0 )
-    save_n = counter + 1;
 }
 
 
@@ -109,9 +105,9 @@ void KinectCapture::imageCallback(const PC::ConstPtr& cloud)
   // If we are saving
   if ( saveImg )
   {
-    std::cout << "Writing cloud " << save_n << std::endl;
     std::string fName = std::string("kcap_images/image-") + boost::lexical_cast<std::string>(save_n);
     std::string fEnding = ".png";
+    std::cout << std::endl << "Saved image: " << fName+fEnding ;
     cv::imwrite(fName+fEnding, pcImg);
 
       // PC rgbpc;
@@ -133,7 +129,7 @@ void KinectCapture::imageCallback(const PC::ConstPtr& cloud)
     fEnding = std::string(".pcd");
     pcl::io::savePCDFileBinary(fName+fEnding, *cloud);
     save_n++;
-    std::cout << "Saved image." << std::endl;
+    std::cout << " and point cloud " << fName+fEnding << std::endl;
     saveImg = false;
   }
 }
