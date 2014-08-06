@@ -8,8 +8,8 @@ Included is also a small PCD viewer for viewing the captured point cloud.
 
 ##### Usage
 
-**To capture:** ./kcap
-**To view:** viewpcd path-to-file
+- **To capture:** ./kcap
+- **To view:** viewpcd path-to-file
 
 
 **Requirements:** OpenCV & Point Cloud Library(PCL)
