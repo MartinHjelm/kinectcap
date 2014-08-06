@@ -128,7 +128,7 @@ void KinectCapture::imageCallback(const PC::ConstPtr& cloud)
     
     fEnding = std::string(".pcd");
     pcl::io::savePCDFileBinary(fName+fEnding, *cloud);
-    std::cout << " and point cloud " << fName+fEnding << std::endl;
+    std::cout << " and point cloud: " << fName+fEnding;
     save_n++;
     saveImg = false;
   }
@@ -199,7 +199,7 @@ KinectCapture::run()
   }
   // start receiving point clouds
   interface->start ();
-  std::cout << "Press enter key to save current image. Ctrl-c to exit." << std::endl;
+  std::cout << "Press enter key to save current image. q + enter key to exit." << std::endl;
 
 
   char s;
@@ -212,6 +212,7 @@ KinectCapture::run()
       break;
     saveImg = true;
   }
+  std::cout << std::endl << "Exiting..." << std::endl;
   // stop the grabber
   interface->stop ();
 }
