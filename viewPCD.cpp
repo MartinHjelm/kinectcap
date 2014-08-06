@@ -16,7 +16,7 @@ main(int argc, char ** argv)
   pcl::PCDReader reader;
   reader.read (fName, *cloud);
 
-  // // View Point Cloud
+  // View Point Cloud
   pcl::visualization::PCLVisualizer::Ptr viewer (new pcl::visualization::PCLVisualizer ("Point Cloud from: "+fName));
   pcl::visualization::PointCloudColorHandlerRGBField<PointT> rgb(cloud);
   viewer->addPointCloud<PointT> (cloud, rgb, "Cloud");
@@ -25,11 +25,11 @@ main(int argc, char ** argv)
   viewer->addCoordinateSystem (0.25);
   viewer->setCameraPosition(0, 0, -3, 0, -1, 0);
 
-
   while (!viewer->wasStopped ())
   {
     viewer->spinOnce (100);
     boost::this_thread::sleep (boost::posix_time::seconds (1));
   }
-    return 0;
+  
+  return 0;
 }
