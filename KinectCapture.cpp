@@ -84,7 +84,7 @@ void KinectCapture::imageCallback(const PC::ConstPtr& cloud)
 {
   
   // Convert point cloud to an image of the point cloud.
-  cv::Mat pcImg(640,480,CV_8UC3);
+  cv::Mat pcImg(480,640,CV_8UC3);
   Eigen::Vector3i rgbVals;  
   for(int iter_x = 0; iter_x != 640; iter_x++)
   {
@@ -107,7 +107,7 @@ void KinectCapture::imageCallback(const PC::ConstPtr& cloud)
   {
     std::string fName = std::string("kcap_images/image-") + boost::lexical_cast<std::string>(save_n);
     std::string fEnding = ".png";
-    std::cout << std::endl << "Saved image: " << fName+fEnding ;
+    std::cout << "Saved image: " << fName+fEnding ;
     cv::imwrite(fName+fEnding, pcImg);
 
       // PC rgbpc;
@@ -128,8 +128,8 @@ void KinectCapture::imageCallback(const PC::ConstPtr& cloud)
     
     fEnding = std::string(".pcd");
     pcl::io::savePCDFileBinary(fName+fEnding, *cloud);
-    save_n++;
     std::cout << " and point cloud " << fName+fEnding << std::endl;
+    save_n++;
     saveImg = false;
   }
 }
@@ -173,7 +173,7 @@ void
 KinectCapture::run()
 {
    
-  cv::Mat pcImg(640,480,CV_8UC3);
+  cv::Mat pcImg(480,640,CV_8UC3);
   if (capImage)
   {
     cv::imshow("Result", pcImg);
@@ -199,14 +199,16 @@ KinectCapture::run()
   }
   // start receiving point clouds
   interface->start ();
-  
-  std::string s;
+  std::cout << "Press enter key to save current image. Ctrl-c to exit." << std::endl;
+
+
+  char s;
   while (true)
   {
-    std::cout << "Enter key " << std::flush;
-    std::cin.get();
+    s = std::cin.get();
+    //std::cin.ignore();
     // std::cin >> s;
-    if ( s == "q" )
+    if ( s == 'q' )
       break;
     saveImg = true;
   }
