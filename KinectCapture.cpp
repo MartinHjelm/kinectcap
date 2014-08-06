@@ -20,21 +20,25 @@ class KinectCapture
 {
   void imageCallback(const PC::ConstPtr& cloud);
   void videoCallback(const boost::shared_ptr<openni_wrapper::Image>& img);
+  void setImageNameCounter ();
 
   boost::shared_ptr<cv::VideoWriter> videoWriter;
   bool capImage, capVideo, saveImg;
   int save_n, skipImageFreq;
+  std::string imgCaptureDir;
 
 public:  
-  KinectCapture();
-  void run();
-  void setCaptureType(std::string s);
-  void setSkipFreq(std::string s);
+  KinectCapture ();
+  void run ();
+  void setCaptureType ( std::string s );
+  void setSkipFreq ( std::string s );
+  void setImageCaptureDir ( std::string s );
+  std::string getImageCaptureDir ();
 };
 
   
 
-KinectCapture::KinectCapture() : capImage(false), capVideo(false), saveImg(false), save_n(0), skipImageFreq(1)
+KinectCapture::KinectCapture() : capImage(false), capVideo(false), saveImg(false), save_n(0), skipImageFreq(1), imgCaptureDir("kcap_images")
 {}
 
 
@@ -48,7 +52,35 @@ void KinectCapture::setCaptureType ( std::string s )
     capImage = true;
 }
 
-void KinectCapture::setSkipFreq(std::string s) { skipImageFreq = std::atoi(s.c_str()); }
+
+void KinectCapture::setSkipFreq (std::string s) { skipImageFreq = std::atoi(s.c_str()); }
+std::string KinectCapture::getImageCaptureDir() { return imgCaptureDir; }
+
+void KinectCapture::setImageCaptureDir ( std::string s ) 
+{ 
+    imgCaptureDir = s; 
+   // Create image directory if it does not exist
+    boost::filesystem::path dir( imgCaptureDir );
+    if ( boost::filesystem::create_directories(dir) ) printf("Mkdir: kcap_images\n");  
+    // Set counter to the +1 number of images in the directory 
+    setImageNameCounter ();  
+}
+
+
+void
+KinectCapture::setImageNameCounter()
+{
+  int counter = 0;
+  boost::filesystem::directory_iterator it( getImageCaptureDir() );
+  for (; it != boost::filesystem::directory_iterator(); ++it )
+  {
+    if ( boost::filesystem::is_regular_file( it->status() ) && it->path().extension() == "jpg" )
+      counter++;
+  }
+  // Set image name counter
+  if ( counter != 0 )
+    save_n = counter + 1;
+}
 
 
 
@@ -78,7 +110,7 @@ void KinectCapture::imageCallback(const PC::ConstPtr& cloud)
   if ( saveImg )
   {
     std::cout << "Writing cloud " << save_n << std::endl;
-    std::string fName = std::string("image-") + boost::lexical_cast<std::string>(save_n);
+    std::string fName = std::string("kcap_images/image-") + boost::lexical_cast<std::string>(save_n);
     std::string fEnding = ".png";
     cv::imwrite(fName+fEnding, pcImg);
 
@@ -101,7 +133,7 @@ void KinectCapture::imageCallback(const PC::ConstPtr& cloud)
     fEnding = std::string(".pcd");
     pcl::io::savePCDFileBinary(fName+fEnding, *cloud);
     save_n++;
-    std::cout << "Done" << std::endl;
+    std::cout << "Saved image." << std::endl;
     saveImg = false;
   }
 }
@@ -117,14 +149,12 @@ KinectCapture::videoCallback(const boost::shared_ptr<openni_wrapper::Image>& img
     cv::Mat imgFrame = cv::Mat(img->getHeight(),img->getWidth(),CV_8UC3);
     img->fillRGB(imgFrame.cols,imgFrame.rows,imgFrame.data,imgFrame.step);
     cv::cvtColor(imgFrame,imgFrame,CV_RGB2BGR);
-    std::string fileName = std::string("image-") + boost::lexical_cast<std::string>(save_n) + std::string(".jpg");
+    std::string fileName = std::string("kcap_images/image-") + boost::lexical_cast<std::string>(save_n) + std::string(".jpg");
     cv::imwrite(fileName, imgFrame);
   }
   
   save_n++;
 }
-
-
 
 
 
@@ -189,21 +219,24 @@ KinectCapture::run()
 }
 
 
-
-
-
 // Main Fun
 int main(int argc, char ** argv)
 {
   try 
   {    
     KinectCapture kc;
+
+    // Image or image sequence capture
     std::string s = "";
-    if(argv[1])
-      s = std::string(argv[1]);
-    if(argv[2])
-      kc.setSkipFreq(std::string(argv[2]));
+    if(argv[1]) s = std::string(argv[1]);
     kc.setCaptureType( s );
+    
+    // If video set frame rate skipping
+    if(argv[2]) kc.setSkipFreq(std::string(argv[2]));  
+
+    // Set directory for storing images 
+    kc.setImageCaptureDir("kcap_images");
+
     kc.run();
     return 0;
   }
