@@ -22,13 +22,13 @@ main(int argc, char ** argv)
   viewer->addPointCloud<PointT> (cloud, rgb, "Cloud");
   viewer->setPointCloudRenderingProperties (pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 3, "Cloud");  
   viewer->setBackgroundColor (0, 0, 0);
-  viewer->addCoordinateSystem (0.25);
+  viewer->addCoordinateSystem (0.25,"Coordinate Axes",0);
   viewer->setCameraPosition(0, 0, -3, 0, -1, 0);
 
   while (!viewer->wasStopped ())
   {
     viewer->spinOnce (100);
-    boost::this_thread::sleep (boost::posix_time::seconds (1));
+    boost::this_thread::sleep (boost::posix_time::seconds (10));
   }
   
   return 0;
