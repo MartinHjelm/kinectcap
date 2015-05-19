@@ -37,8 +37,13 @@ public:
 };
 
   
-
-KinectCapture::KinectCapture() : capImage(false), capVideo(false), saveImg(false), save_n(0), skipImageFreq(1), imgCaptureDir("kcap_images")
+KinectCapture::KinectCapture() : 
+capImage(false), 
+capVideo(false), 
+saveImg(false), 
+save_n(0), 
+skipImageFreq(1), 
+imgCaptureDir("kcap_images")
 {}
 
 
@@ -54,6 +59,7 @@ void KinectCapture::setCaptureType ( std::string s )
 
 
 void KinectCapture::setSkipFreq (std::string s) { skipImageFreq = std::atoi(s.c_str()); }
+
 std::string KinectCapture::getImageCaptureDir() { return imgCaptureDir; }
 
 void KinectCapture::setImageCaptureDir ( std::string s ) 
@@ -90,8 +96,8 @@ void KinectCapture::imageCallback(const PC::ConstPtr& cloud)
   {
     for(int iter_y = 0; iter_y != 480; iter_y++)
     {
-      PointT p = cloud->at(iter_x,iter_y);
-      rgbVals = p.getRGBVector3i();
+      // PointT p = cloud->at(iter_x,iter_y);
+      rgbVals = (cloud->at(iter_x,iter_y)).getRGBVector3i();
       pcImg.at<cv::Vec3b>(iter_y,iter_x)[0] = rgbVals[2]; //BGR 2 RGB
       pcImg.at<cv::Vec3b>(iter_y,iter_x)[1] = rgbVals[1];
       pcImg.at<cv::Vec3b>(iter_y,iter_x)[2] = rgbVals[0];
@@ -225,10 +231,19 @@ int main(int argc, char ** argv)
   {    
     KinectCapture kc;
 
+    // Check args 
+    if(argc > 1 && std::string(argv[1])=="--help")
+    { 
+      printf("Kinectcap usage: kinectcap --[image|video] --[savedir]\n");
+      return 0;
+    }
+
     // Image or image sequence capture
-    std::string s = "";
-    if(argv[1]) s = std::string(argv[1]);
-    kc.setCaptureType( s );
+    if(argc > 1) 
+      kc.setCaptureType( std::string(argv[1]) );
+    else 
+      kc.setCaptureType( "" );
+
     
     // If video set frame rate skipping
     if(argv[2]) kc.setSkipFreq(std::string(argv[2]));  
@@ -251,8 +266,3 @@ int main(int argc, char ** argv)
   }
   
 }
-
-
-
-
-
