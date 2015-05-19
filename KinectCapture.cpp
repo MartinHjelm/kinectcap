@@ -1,5 +1,9 @@
 // std
 #include <string>
+#include <iostream>
+
+// boost 
+#include <boost/program_options.hpp>
 
 // Opencv
 #include <opencv2/core/core.hpp>
@@ -31,14 +35,14 @@ public:
   KinectCapture ();
   void run ();
   void setCaptureType ( std::string s );
-  void setSkipFreq ( std::string s );
+  void setSkipFreq ( const int &freq );
   void setImageCaptureDir ( std::string s );
   std::string getImageCaptureDir ();
 };
 
   
 KinectCapture::KinectCapture() : 
-capImage(false), 
+capImage(true), 
 capVideo(false), 
 saveImg(false), 
 save_n(0), 
@@ -47,27 +51,29 @@ imgCaptureDir("kcap_images")
 {}
 
 
-void KinectCapture::setCaptureType ( std::string s )
+void 
+KinectCapture::setCaptureType ( std::string s )
 {
-  if (s.length() > 1 && s == "--image") 
+  if (s == "image") 
     capImage = true;
-  else if (s.length() > 1 && s == "--video") 
+  else if (s == "video") 
     capVideo = true;    
-  else
-    capImage = true;
 }
 
 
-void KinectCapture::setSkipFreq (std::string s) { skipImageFreq = std::atoi(s.c_str()); }
+void KinectCapture::setSkipFreq(const int &freq) { skipImageFreq = freq; }
 
 std::string KinectCapture::getImageCaptureDir() { return imgCaptureDir; }
 
-void KinectCapture::setImageCaptureDir ( std::string s ) 
+
+
+void 
+KinectCapture::setImageCaptureDir ( std::string s ) 
 { 
     imgCaptureDir = s; 
    // Create image directory if it does not exist
     boost::filesystem::path dir( imgCaptureDir );
-    if ( boost::filesystem::create_directories(dir) ) printf("Mkdir: kcap_images\n");  
+    if ( boost::filesystem::create_directories(dir) ) printf("Saving captures to directory %s\n",s.c_str());  
     // Set counter to the +1 number of images in the directory 
     setImageNameCounter ();  
 }
@@ -224,35 +230,52 @@ KinectCapture::run()
 }
 
 
-// Main Fun
+
+
+
 int main(int argc, char ** argv)
 {
   try 
   {    
-    KinectCapture kc;
 
-    // Check args 
-    if(argc > 1 && std::string(argv[1])=="--help")
-    { 
-      printf("Kinectcap usage: kinectcap --[image|video] --[savedir]\n");
-      return 0;
+    // Create command line options
+    namespace po = boost::program_options; 
+    po::options_description desc("Options"); 
+    desc.add_options() 
+      (",c", po::value<std::string>(), "Capture type: image(default) or video")
+      (",f", po::value<int>(), "If video, frame rate. Default is 5 per second.")
+      ("dir,d", po::value<std::string>(), "Directory to save the capture to. Default is: kcap_images")
+      ("help,h", "Print help messages");
+    po::variables_map vm;
+    po::store(po::command_line_parser(argc, argv).options(desc).run(),vm);
+
+    if (vm.count("help")) {
+        std::cout << desc << "\n";
+        return 1;
     }
 
-    // Image or image sequence capture
-    if(argc > 1) 
-      kc.setCaptureType( std::string(argv[1]) );
-    else 
-      kc.setCaptureType( "" );
+    // Create capture object and do configure
+    KinectCapture kc;
 
-    
+    // Image or image sequence capture default is image 
+    if(vm.count("c")) 
+      kc.setCaptureType(vm["c"].as<std::string>());
+
     // If video set frame rate skipping
-    if(argv[2]) kc.setSkipFreq(std::string(argv[2]));  
+    if(vm.count("f")) 
+      kc.setSkipFreq(vm["f"].as<int>());  
 
-    // Set directory for storing images 
-    kc.setImageCaptureDir("kcap_images");
+    // If set directory for storing capture 
+    if(vm.count("dir"))    
+      kc.setImageCaptureDir(vm["dir"].as<std::string>());
 
+
+    // All configured lets run, run, run!!
     kc.run();
-    return 0;
+
+
+
+    return 1;
   }
   catch ( std::exception &e ) 
   {
