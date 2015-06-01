@@ -1,3 +1,5 @@
+Added a homebrew tap and formula for installation https://github.com/MartinHjelm/homebrew-taps
+
 # KINECTCAP
 
 Captures Kinect image and point cloud data, and saves them to disk when a key is pressed.
