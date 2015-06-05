@@ -25,11 +25,14 @@ class KinectCapture
   void imageCallback(const PC::ConstPtr& cloud);
   void videoCallback(const boost::shared_ptr<openni_wrapper::Image>& img);
   void setImageNameCounter ();
+  void updateImShow();
 
   boost::shared_ptr<cv::VideoWriter> videoWriter;
   bool capImage, capVideo, saveImg;
   int save_n, skipImageFreq;
   std::string imgCaptureDir;
+
+  cv::Mat pcImg;
 
 public:  
   KinectCapture ();
@@ -47,7 +50,8 @@ capVideo(false),
 saveImg(false), 
 save_n(0), 
 skipImageFreq(1), 
-imgCaptureDir("kcap_images")
+imgCaptureDir("kcap_images"),
+pcImg(cv::Mat(480,640,CV_8UC3))
 {}
 
 
@@ -95,15 +99,17 @@ KinectCapture::setImageNameCounter()
 void KinectCapture::imageCallback(const PC::ConstPtr& cloud)
 {
   
+
+  // printf("Callback!\n");
   // Convert point cloud to an image of the point cloud.
-  cv::Mat pcImg(480,640,CV_8UC3);
+  //cv::Mat pcImg(480,640,CV_8UC3);
   Eigen::Vector3i rgbVals;  
   for(int iter_x = 0; iter_x != 640; iter_x++)
   {
     for(int iter_y = 0; iter_y != 480; iter_y++)
     {
-      // PointT p = cloud->at(iter_x,iter_y);
-      rgbVals = (cloud->at(iter_x,iter_y)).getRGBVector3i();
+      PointT p = cloud->at(iter_x,iter_y);
+      rgbVals = p.getRGBVector3i();
       pcImg.at<cv::Vec3b>(iter_y,iter_x)[0] = rgbVals[2]; //BGR 2 RGB
       pcImg.at<cv::Vec3b>(iter_y,iter_x)[1] = rgbVals[1];
       pcImg.at<cv::Vec3b>(iter_y,iter_x)[2] = rgbVals[0];
@@ -111,13 +117,17 @@ void KinectCapture::imageCallback(const PC::ConstPtr& cloud)
   }
 
   // Show converted img
-  cv::imshow("Result", pcImg);
-  cv::waitKey(10);
+  // cv::imwrite("result.png", pcImg);
+  // cv::namedWindow( "Result", cv::WINDOW_AUTOSIZE );
+  // cv::imshow("Result", pcImg);
+  // // printf("Callback2!\n");
+  // cv::waitKey(10);
 
+updateImShow();
   // If we are saving
   if ( saveImg )
   {
-    std::string fName = std::string("kcap_images/image-") + boost::lexical_cast<std::string>(save_n);
+    std::string fName = getImageCaptureDir() + std::string("/image-") + boost::lexical_cast<std::string>(save_n);
     std::string fEnding = ".png";
     std::cout << "Saved image: " << fName+fEnding ;
     cv::imwrite(fName+fEnding, pcImg);
@@ -164,7 +174,12 @@ KinectCapture::videoCallback(const boost::shared_ptr<openni_wrapper::Image>& img
   save_n++;
 }
 
-
+void 
+KinectCapture::updateImShow()
+{
+    cv::imshow("Result", pcImg);
+  cv::waitKey(10);
+}
 
 
 /*
@@ -185,16 +200,17 @@ void
 KinectCapture::run()
 {
    
-  cv::Mat pcImg(480,640,CV_8UC3);
+  //cv::Mat pcImg(480,640,CV_8UC3);
   if (capImage)
   {
+    cv::namedWindow( "Result", cv::WINDOW_AUTOSIZE );
     cv::imshow("Result", pcImg);
-    cv::waitKey(10);
+    cv::waitKey(1);
   }
   // create a new grabber for OpenNI devices
-  pcl::Grabber* interface = new pcl::OpenNIGrabber();
+  pcl::Grabber* interface = new pcl::OpenNIGrabber("#1");
 
-  // std::cout << interface->getFramesPerSecond() << std::endl;
+  std::cout << interface->getFramesPerSecond() << std::endl;
   boost::signals2::connection c;
   if (capImage)
   {
@@ -217,14 +233,18 @@ KinectCapture::run()
   char s;
   while (true)
   {
-    s = std::cin.get();
-    //std::cin.ignore();
-    // std::cin >> s;
+    // s = std::cin.get();
+    // std::cin.ignore();
+
+
+    std::cin >> s;
     if ( s == 'q' )
       break;
     saveImg = true;
+    std::cout << "Is it running? " << interface->isRunning() << std::endl;
   }
-  std::cout << std::endl << "Exiting..." << std::endl;
+
+  std::cout << std::endl << "Exiting..." <<  std::endl;
   // stop the grabber
   interface->stop ();
 }

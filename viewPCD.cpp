@@ -10,7 +10,6 @@ main(int argc, char ** argv)
 
   typedef pcl::PointXYZRGB PointT;
   typedef pcl::PointXYZ PointT2;
-
   bool pcTypeRGB = true;
 
   // Load point cloud from file

@@ -17,3 +17,13 @@ target_link_libraries(kcap ${Boost_LIBRARIES} ${PCL_LIBRARIES} ${OpenCV_LIBS})
 
 add_executable(viewpcd viewPCD.cpp)
 target_link_libraries(viewpcd ${Boost_LIBRARIES} ${PCL_LIBRARIES} ${OpenCV_LIBS} )
+
+add_executable(pcd2pic pcd2pic.cpp)
+target_link_libraries(pcd2pic ${Boost_LIBRARIES} ${PCL_LIBRARIES} ${OpenCV_LIBS} )
+
+# add_executable (SimpleOpenNIViewer SimpleOpenNIViewer.cpp)
+# target_link_libraries (SimpleOpenNIViewer ${PCL_LIBRARIES})
+
+# add_executable (openni_viewer OpenNIViewer.cpp)
+# target_link_libraries (openni_viewer ${PCL_LIBRARIES})
+
