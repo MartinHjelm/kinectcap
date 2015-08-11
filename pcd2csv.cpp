@@ -71,29 +71,31 @@ int main(int argc, char ** argv)
     reader.read(fNamePCD, *cloud); 
 
     int i = 640*480;
-    Eigen::MatrixXf X(307200,8);
+    Eigen::MatrixXf X(307200,6);
 
-    for(int iCol=0; iCol!=480; iCol++)
+    for(int iRow=0; iRow!=480; iRow++)
     {
-        for(int iRow=0; iRow!=640; iRow++)
+        for(int iCol=0; iCol!=640; iCol++)    
         {   
-            int idx = iRow*480 + iCol;
-            // img x-y-pos
-            X(idx,0) = iRow; 
-            X(idx,1) = iCol;
+            int idx = iRow*640 + iCol;
+            // // img x-y-pos
+            // X(idx,0) = iRow; 
+            // X(idx,1) = iCol;
             // img
-            X(idx,2) = im.at<cv::Vec3b>(iRow,iCol)[0];
-            X(idx,3) = im.at<cv::Vec3b>(iRow,iCol)[1];
-            X(idx,4) = im.at<cv::Vec3b>(iRow,iCol)[2];
+            X(idx,0) = im.at<cv::Vec3b>(iRow,iCol)[0];
+            X(idx,1) = im.at<cv::Vec3b>(iRow,iCol)[1];
+            X(idx,2) = im.at<cv::Vec3b>(iRow,iCol)[2];
             // img
             // PointT p_valid = cloudIn->at(idx);
-            X(idx,5) = cloud->at(idx).x;
-            X(idx,6) = cloud->at(idx).y;
-            X(idx,7) = cloud->at(idx).z;
+            X(idx,3) = cloud->at(idx).x;
+            X(idx,4) = cloud->at(idx).y;
+            X(idx,5) = cloud->at(idx).z;
         }
     }
 
-    writeMat2File(X, "X.txt");
+    int fileNameLen = fNamePCD.length();
+
+    writeMat2File(X, fNamePCD.substr(0,fileNameLen-4)+".csv");
 
     return 1;
 }    

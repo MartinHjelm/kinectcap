@@ -28,11 +28,11 @@ int main(int argc, char ** argv)
 {
 
     // Load point cloud from file
-    std::string fName = "";
+    std::string fNamePCD = "";
     if(argv[1]) 
     {
-        fName = std::string(argv[1]);
-        if(fName == "-h")
+        fNamePCD = std::string(argv[1]);
+        if(fNamePCD == "-h")
         {
             std::cout << "Usage: pcd2pic fileName xyz. xyz argument used if you want to remove color." << std::endl;   
             return -1;
@@ -59,9 +59,9 @@ int main(int argc, char ** argv)
 
     pcl::PCDReader reader;
     if(pcTypeRGB)
-        reader.read (fName, *cloud);  
+        reader.read (fNamePCD, *cloud);  
     else
-        reader.read (fName, *cloud2);
+        reader.read (fNamePCD, *cloud2);
 
     cv::Mat pcImg = cv::Mat::zeros(480,640,CV_8UC3);
     double focalInv = 1000.0/525.0;
@@ -69,6 +69,10 @@ int main(int argc, char ** argv)
 
     if (pcTypeRGB)
     {
+
+        // Make whole image color of blue so that we can see lost pixels
+        pcImg.setTo(cv::Scalar(255,0,0));
+
         std::vector<int> indices;
         pcl::removeNaNFromPointCloud(*cloud,*cloud, indices);
         for(PC::const_iterator iter=cloud->begin(); iter!=cloud->end(); ++iter)
@@ -97,8 +101,8 @@ int main(int argc, char ** argv)
             pcImg.at<cv::Vec3b>(yPos,xPos)[2] = 255;
         }
     }
-
-    cv::imwrite("test.png", pcImg);
-
+    
+    int fileNameLen = fNamePCD.length();
+    cv::imwrite(fNamePCD.substr(0,fileNameLen-4)+"_pcd.png", pcImg);
     return 1;
 }    

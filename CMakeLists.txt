@@ -24,6 +24,10 @@ target_link_libraries(pcd2pic ${Boost_LIBRARIES} ${PCL_LIBRARIES} ${OpenCV_LIBS}
 add_executable(pcd2csv pcd2csv.cpp)
 target_link_libraries(pcd2csv ${Boost_LIBRARIES} ${PCL_LIBRARIES} ${OpenCV_LIBS} )
 
+add_executable(csv2pcd csv2pcd.cpp)
+target_link_libraries(csv2pcd ${Boost_LIBRARIES} ${PCL_LIBRARIES} ${OpenCV_LIBS} )
+
+
 # add_executable (SimpleOpenNIViewer SimpleOpenNIViewer.cpp)
 # target_link_libraries (SimpleOpenNIViewer ${PCL_LIBRARIES})
 
