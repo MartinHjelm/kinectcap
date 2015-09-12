@@ -77,7 +77,8 @@ KinectCapture::setImageCaptureDir ( std::string s )
     imgCaptureDir = s; 
    // Create image directory if it does not exist
     boost::filesystem::path dir( imgCaptureDir );
-    if ( boost::filesystem::create_directories(dir) ) printf("Saving captures to directory %s\n",s.c_str());  
+    if ( boost::filesystem::create_directories(dir) ) 
+      printf("Saving captures to directory %s\n",s.c_str());  
     // Set counter to the +1 number of images in the directory 
     setImageNameCounter ();  
 }
@@ -235,13 +236,13 @@ KinectCapture::run()
   {
     // s = std::cin.get();
     // std::cin.ignore();
-
-
-    std::cin >> s;
+       std::cout << "Enter key " << std::flush;
+    std::cin.get(); 
+    // std::cin >> s;
     if ( s == 'q' )
       break;
     saveImg = true;
-    std::cout << "Is it running? " << interface->isRunning() << std::endl;
+    // std::cout << "Is it running? " << interface->isRunning() << std::endl;
   }
 
   std::cout << std::endl << "Exiting..." <<  std::endl;
@@ -280,6 +281,8 @@ int main(int argc, char ** argv)
     // Image or image sequence capture default is image 
     if(vm.count("c")) 
       kc.setCaptureType(vm["c"].as<std::string>());
+    else
+      kc.setCaptureType("image");
 
     // If video set frame rate skipping
     if(vm.count("f")) 
@@ -288,6 +291,8 @@ int main(int argc, char ** argv)
     // If set directory for storing capture 
     if(vm.count("dir"))    
       kc.setImageCaptureDir(vm["dir"].as<std::string>());
+    else 
+      kc.setImageCaptureDir("kcap_images");
 
 
     // All configured lets run, run, run!!

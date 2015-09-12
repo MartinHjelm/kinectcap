@@ -46,7 +46,7 @@ int main(int argc, char ** argv)
     PC::Ptr cloud(new PC);
 
     // Read csv file to pcd
-    std::ifstream file(fNameCSV);
+    std::ifstream file(fNameCSV.c_str());
     std::string values;
     while ( file.good() )
     {
