@@ -28,9 +28,5 @@ add_executable(csv2pcd csv2pcd.cpp)
 target_link_libraries(csv2pcd ${Boost_LIBRARIES} ${PCL_LIBRARIES} ${OpenCV_LIBS} )
 
 
-# add_executable (SimpleOpenNIViewer SimpleOpenNIViewer.cpp)
-# target_link_libraries (SimpleOpenNIViewer ${PCL_LIBRARIES})
-
-# add_executable (openni_viewer OpenNIViewer.cpp)
-# target_link_libraries (openni_viewer ${PCL_LIBRARIES})
-
+# Install to /usr/local/bin
+INSTALL (TARGETS viewpcd pcd2pic pcd2csv csv2pcd RUNTIME DESTINATION /usr/local/bin)
